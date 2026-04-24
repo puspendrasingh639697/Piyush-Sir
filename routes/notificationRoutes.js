@@ -1,0 +1,15 @@
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import { 
+  getUserNotifications, 
+  markAsRead, 
+  markAllAsRead 
+} from '../controllers/notificationController.js';
+
+const router = express.Router();
+
+router.get('/', protect, getUserNotifications);
+router.put('/:id/read', protect, markAsRead);
+router.put('/read-all', protect, markAllAsRead);
+
+export default router;
