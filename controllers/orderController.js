@@ -188,6 +188,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import Cart from '../models/Cart.js';
 import User from '../models/User.js';
+import Coupon from '../models/Coupon.js';
 
 // Temporary notification function (agar nahi hai toh)
 const createNotification = async (userId, title, message, type, orderId) => {
@@ -204,9 +205,11 @@ const sendEmail = async ({ email, subject, message }) => {
 
 // ✅ Create Order
 
+// ✅ Create Order (With Coupon Support)
 export const createOrder = async (req, res) => {
     try {
-        const { orderItems, shippingAddress, totalPrice, paymentMethod } = req.body;
+        const { orderItems, shippingAddress, totalPrice, paymentMethod, couponId } = req.body;
+        
         if (!orderItems || orderItems.length === 0) {
             return res.status(400).json({ message: "Bhai, cart khali hai!" });
         }
@@ -224,7 +227,8 @@ export const createOrder = async (req, res) => {
             orderItems, 
             shippingAddress,
             totalPrice,
-            paymentMethod: paymentMethod || 'COD'
+            paymentMethod: paymentMethod || 'COD',
+            couponUsed: couponId || null  // ✅ Add this
         });
 
         // Stock reduction logic
@@ -234,7 +238,19 @@ export const createOrder = async (req, res) => {
             await product.save();
         }
 
-        // ✅ FIXED - Convert order._id to string before slice
+        // ✅ MARK COUPON AS USED (Add this block)
+        if (couponId) {
+            try {
+                await Coupon.findByIdAndUpdate(couponId, {
+                    $push: { usedBy: { userId: req.user._id, orderId: order._id, usedAt: new Date() } },
+                    $inc: { usedCount: 1 }
+                });
+                console.log(`✅ Coupon ${couponId} marked as used by user ${req.user._id}`);
+            } catch (couponErr) {
+                console.log("Coupon mark error:", couponErr.message);
+            }
+        }
+
         const orderIdShort = order._id.toString().slice(-8);
         
         // ✅ ADD NOTIFICATION HERE
@@ -263,6 +279,7 @@ export const createOrder = async (req, res) => {
 
         await Cart.findOneAndDelete({ userId: req.user._id });
         res.status(201).json({ message: "Order Placed! 🎉", order });
+        
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
