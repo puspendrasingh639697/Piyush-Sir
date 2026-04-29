@@ -257,12 +257,12 @@ export const applyCoupon = async (req, res) => {
     console.log(req.body);
     console.log("Content-Type:", req.headers['content-type']);
     
-    const { code, orderAmount } = req.body;
-    console.log("Destructured code:", code);
-    console.log("Destructured orderAmount:", orderAmount);
     try {
         const { code, orderAmount } = req.body;
         const userId = req.user?._id;
+        
+        console.log("Destructured code:", code);
+        console.log("Destructured orderAmount:", orderAmount);
         
         // ✅ FIX: Check if code exists
         if (!code) {
@@ -333,6 +333,16 @@ export const applyCoupon = async (req, res) => {
             discountAmount = 0;
             finalAmount = orderAmount;
         }
+        
+        // ✅ 🔴 FIX: Mark coupon as used for this user (YEH LINES ADD KARO)
+        coupon.usedCount += 1;
+        coupon.usedBy.push({ 
+            userId: userId, 
+            usedAt: new Date() 
+        });
+        await coupon.save();
+        
+        console.log(`✅ Coupon ${coupon.code} used by user ${userId}. Total used: ${coupon.usedCount}`);
         
         res.json({
             success: true,
