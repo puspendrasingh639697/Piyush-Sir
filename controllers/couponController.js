@@ -334,7 +334,11 @@ export const applyCoupon = async (req, res) => {
             finalAmount = orderAmount;
         }
         
-        // ✅ 🔴 FIX: Mark coupon as used for this user (YEH LINES ADD KARO)
+        // ✅ 🔴 FIX: Round to 2 decimal places
+        discountAmount = Math.round(discountAmount * 100) / 100;
+        finalAmount = Math.round(finalAmount * 100) / 100;
+        
+        // ✅ 🔴 FIX: Mark coupon as used for this user
         coupon.usedCount += 1;
         coupon.usedBy.push({ 
             userId: userId, 
