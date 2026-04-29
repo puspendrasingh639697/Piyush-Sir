@@ -55,11 +55,11 @@ export const createCoupon = async (req, res) => {
 // ✅ Apply Voucher/Coupon
 export const applyCoupon = async (req, res) => {
     try {
-        const { couponCode, totalAmount } = req.body;
+        const { code, orderAmount } = req.body;  // ✅ CHANGE 1
         const userId = req.user._id;
         
         const coupon = await Coupon.findOne({ 
-            code: couponCode.toUpperCase(), 
+            code: code.toUpperCase(), 
             isActive: true 
         });
         
@@ -73,7 +73,7 @@ export const applyCoupon = async (req, res) => {
         }
         
         // ✅ Check minimum order amount
-        if (totalAmount < coupon.minOrderAmount) {
+        if (orderAmount < coupon.minOrderAmount) {  // ✅ CHANGE 2
             return res.status(400).json({ 
                 message: `Minimum order amount of ₹${coupon.minOrderAmount} required for this voucher!` 
             });
@@ -100,17 +100,17 @@ export const applyCoupon = async (req, res) => {
         
         // Calculate discount
         let discountAmount = 0;
-        let finalAmount = totalAmount;
+        let finalAmount = orderAmount;  // ✅ CHANGE 3
         
         if (coupon.voucherType === 'discount') {
-            discountAmount = (totalAmount * coupon.discountPercent) / 100;
-            finalAmount = totalAmount - discountAmount;
+            discountAmount = (orderAmount * coupon.discountPercent) / 100;  // ✅ CHANGE 4
+            finalAmount = orderAmount - discountAmount;
         } else if (coupon.voucherType === 'fixed_amount') {
-            discountAmount = Math.min(coupon.fixedAmount, totalAmount);
-            finalAmount = totalAmount - discountAmount;
+            discountAmount = Math.min(coupon.fixedAmount, orderAmount);
+            finalAmount = orderAmount - discountAmount;
         } else if (coupon.voucherType === 'free_shipping') {
             discountAmount = 0;
-            finalAmount = totalAmount;
+            finalAmount = orderAmount;
         }
         
         res.json({
@@ -129,6 +129,7 @@ export const applyCoupon = async (req, res) => {
         });
         
     } catch (error) {
+        console.error("Apply Coupon Error:", error);  // ✅ Debug log
         res.status(500).json({ message: error.message });
     }
 };
