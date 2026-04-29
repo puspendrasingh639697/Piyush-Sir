@@ -253,6 +253,13 @@ export const createCoupon = async (req, res) => {
 
 // ✅ Apply Voucher/Coupon (FIXED - with null check)
 export const applyCoupon = async (req, res) => {
+    console.log("=== RAW REQUEST BODY ===");
+    console.log(req.body);
+    console.log("Content-Type:", req.headers['content-type']);
+    
+    const { code, orderAmount } = req.body;
+    console.log("Destructured code:", code);
+    console.log("Destructured orderAmount:", orderAmount);
     try {
         const { code, orderAmount } = req.body;
         const userId = req.user?._id;
