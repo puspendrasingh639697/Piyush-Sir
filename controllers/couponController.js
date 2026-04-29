@@ -193,3 +193,25 @@ export const deleteCoupon = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// ✅ Toggle Coupon Status (Activate/Deactivate)
+export const toggleCouponStatus = async (req, res) => {
+    try {
+        const coupon = await Coupon.findById(req.params.id);
+        
+        if (!coupon) {
+            return res.status(404).json({ message: "Coupon not found!" });
+        }
+        
+        coupon.isActive = !coupon.isActive;
+        await coupon.save();
+        
+        res.json({ 
+            success: true, 
+            message: `Coupon ${coupon.isActive ? 'activated' : 'deactivated'} successfully!`,
+            coupon 
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
