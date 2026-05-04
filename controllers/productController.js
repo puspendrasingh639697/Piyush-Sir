@@ -197,3 +197,36 @@ export const createProductReview = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// ✅ Get all reviews for a product (ADD THIS FUNCTION)
+export const getProductReviews = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        
+        // Sort reviews by createdAt (newest first)
+        const reviews = product.reviews.sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        
+        // Calculate average rating
+        let averageRating = 0;
+        if (reviews.length > 0) {
+            const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+            averageRating = sum / reviews.length;
+        }
+        
+        res.json({
+            success: true,
+            reviews: reviews,
+            totalReviews: reviews.length,
+            averageRating: averageRating.toFixed(1)
+        });
+    } catch (error) {
+        console.error("Get product reviews error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
