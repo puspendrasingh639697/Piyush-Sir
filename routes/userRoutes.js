@@ -38,10 +38,6 @@ router.get("/address", protect, getAddresses);
 router.post("/address", protect, addAddress);
 router.put("/address/:addressId", protect, updateAddress);
 router.delete("/address/:addressId", protect, deleteAddress);
-
-// 4. WISHLIST ROUTES (Tera Main Focus)
-// ✅ Pehle protect chalega, phir toggleWishlist
-// router.post('/wishlist', protect, toggleWishlist);
 router.get('/wishlist', protect, getWishlist);
 // router.post('/wishlist', protect, userController.toggleWishlist)
 router.post('/wishlist', protect, toggleWishlist);
