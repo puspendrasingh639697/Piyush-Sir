@@ -164,16 +164,89 @@ export const getAddresses = async (req, res) => {
     }
 };
 
+// export const registerUser = async (req, res) => {
+//     const { name, email, password, phone, adminSecret } = req.body;
+
+//     const userExists = await User.findOne({ email });
+//     if (userExists) return res.status(400).json({ message: "User already exists" });
+
+//     // --- YEH WALA PART ADD KARO ---
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(password, salt);
+//     // ------------------------------
+
+//     let role = 'user';
+//     if (adminSecret === process.env.ADMIN_SECRET_KEY) {
+//         role = 'admin';
+//     }
+
+//     const user = await User.create({
+//         name,
+//         email,
+//         password: hashedPassword, // <--- Ab hashed password jayega
+//         phone,
+//         role
+//     });
+
+//     if (user) {
+//         res.status(201).json({
+//             _id: user._id,
+//             name: user.name,
+//             email: user.email,
+//             role: user.role,
+//             token: generateToken(user._id)
+//         });
+//     }
+// };
+
+
+// controllers/userController.js mein ye function add karo
+
+
+
+// export const loginUser = async (req, res) => {
+//     const { email, password } = req.body;
+
+//     try {
+//         // 1. Check karo email aur password body mein aa rahe hain ya nahi
+//         if (!email || !password) {
+//             return res.status(400).json({ message: "Please provide email and password" });
+//         }
+
+//         const user = await User.findOne({ email });
+
+//         // 2. Check karo user database mein mila ya nahi
+//         if (!user) {
+//             return res.status(401).json({ message: "Invalid email or password" });
+//         }
+
+//         // 3. Bcrypt compare (Safe check)
+//         const isMatch = await bcrypt.compare(password, user.password);
+
+//         if (isMatch) {
+//             res.json({
+//                 _id: user._id,
+//                 name: user.name,
+//                 email: user.email,
+//                 role: user.role,
+//                 token: generateToken(user._id)
+//             });
+//         } else {
+//             res.status(401).json({ message: "Invalid email or password" });
+//         }
+//     } catch (error) {
+//         // Yahi error tumhe aa rahi thi "Illegal arguments"
+//         res.status(500).json({ message: "Server Error", error: error.message });
+//     }
+// };
 export const registerUser = async (req, res) => {
     const { name, email, password, phone, adminSecret } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: "User already exists" });
 
-    // --- YEH WALA PART ADD KARO ---
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    // ------------------------------
 
     let role = 'user';
     if (adminSecret === process.env.ADMIN_SECRET_KEY) {
@@ -183,63 +256,61 @@ export const registerUser = async (req, res) => {
     const user = await User.create({
         name,
         email,
-        password: hashedPassword, // <--- Ab hashed password jayega
+        password: hashedPassword,
         phone,
         role
     });
 
     if (user) {
+        // ✅ FIX: Add isAdmin field
+        const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+        
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
+            isAdmin: isAdmin,        // ✅ Added
             token: generateToken(user._id)
         });
     }
 };
 
-
-// controllers/userController.js mein ye function add karo
-
-
-
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // 1. Check karo email aur password body mein aa rahe hain ya nahi
         if (!email || !password) {
             return res.status(400).json({ message: "Please provide email and password" });
         }
 
         const user = await User.findOne({ email });
 
-        // 2. Check karo user database mein mila ya nahi
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        // 3. Bcrypt compare (Safe check)
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (isMatch) {
+            // ✅ FIX: Add isAdmin for frontend compatibility
+            const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+            
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                isAdmin: isAdmin,        // ✅ Add this line
                 token: generateToken(user._id)
             });
         } else {
             res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
-        // Yahi error tumhe aa rahi thi "Illegal arguments"
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
-
 
 // ✅ CORRECT - No 'next' parameter
 // ✅ Make sure NO 'next' parameter here
