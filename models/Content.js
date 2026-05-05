@@ -5,7 +5,7 @@ const contentSchema = new mongoose.Schema({
         type: String, 
         required: true, 
         unique: true,
-        enum: ['banner', 'about', 'contact', 'policy'] // Ye categories hain
+        enum: ['banner', 'about', 'terms', 'privacy', 'contact'] // Ye categories hain
     },
     title: { type: String }, // Page ka heading
     body: { type: String },  // Page ka poora text (About us/Policy ke liye)
