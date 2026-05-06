@@ -111,6 +111,8 @@
 
 // server.js (jo tune diya hai - sahi hai, kuch change nahi)
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
@@ -125,7 +127,10 @@ import adminRoutes from './routes/adminRoutes.js'
 import contentRoutes from './routes/contentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
-// Configuration load karo
+// Configuration load 
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 dotenv.config();
 
 // App initialize
@@ -157,6 +162,7 @@ app.use("/api/user", userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Test Route
 app.get('/', (req, res) => {

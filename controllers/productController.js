@@ -1,6 +1,46 @@
 import Product from '../models/Product.js';
 
 // 1. Naya Product dalne ke liye (Admin + Image Support)
+// export const addProduct = async (req, res) => {
+//     console.log("--- Add Product Request Aayi Hai ---");
+//     console.log("Body Data:", req.body);
+//     console.log("File Data:", req.file);
+
+//     try {
+//         const { name, description, price, category, stock } = req.body;
+
+//         if (!name || !price || !description || !category || !stock) {
+//             console.log("❌ Error: Kuch fields missing hain");
+//             return res.status(400).json({ message: "Bhai, saari details (name, price, desc, cat, stock) bharna zaroori hai!" });
+//         }
+
+//         if (!req.file) {
+//             console.log("❌ Error: Image upload nahi hui");
+//             return res.status(400).json({ message: "Bhai, bartan ki photo toh dalo!" });
+//         }
+
+//         const newProduct = new Product({
+//             name,
+//             description,
+//             price: Number(price), 
+//             category,
+//             stock: Number(stock),
+//             image: `/uploads/${req.file.filename}`
+//         });
+
+//         const savedProduct = await newProduct.save();
+        
+//         console.log("✅ Success: Product database mein save ho gaya!");
+//         res.status(201).json({ message: "Product Added Successfully!", product: savedProduct });
+
+//     } catch (error) {
+//         console.log("🔥 Catch Error:", error.message);
+//         res.status(500).json({ message: "Server Error: " + error.message });
+//     }
+// };
+
+
+
 export const addProduct = async (req, res) => {
     console.log("--- Add Product Request Aayi Hai ---");
     console.log("Body Data:", req.body);
@@ -10,31 +50,45 @@ export const addProduct = async (req, res) => {
         const { name, description, price, category, stock } = req.body;
 
         if (!name || !price || !description || !category || !stock) {
-            console.log("❌ Error: Kuch fields missing hain");
-            return res.status(400).json({ message: "Bhai, saari details (name, price, desc, cat, stock) bharna zaroori hai!" });
+            return res.status(400).json({ message: "All fields are required!" });
         }
 
         if (!req.file) {
-            console.log("❌ Error: Image upload nahi hui");
-            return res.status(400).json({ message: "Bhai, bartan ki photo toh dalo!" });
+            return res.status(400).json({ message: "Product image is required!" });
         }
+
+        // ✅ Cloudinary se full URL le rahe hain
+        let imageUrl = '';
+        if (req.file.path) {
+            imageUrl = req.file.path;  // Cloudinary full URL
+        } else if (req.file.secure_url) {
+            imageUrl = req.file.secure_url;  // Alternative field
+        } else {
+            imageUrl = `/uploads/${req.file.filename}`;  // Fallback
+        }
+
+        console.log("✅ Image URL:", imageUrl);
 
         const newProduct = new Product({
             name,
             description,
-            price: Number(price), 
+            price: Number(price),
             category,
             stock: Number(stock),
-            image: req.file.path
+            image: imageUrl
         });
 
         const savedProduct = await newProduct.save();
         
-        console.log("✅ Success: Product database mein save ho gaya!");
-        res.status(201).json({ message: "Product Added Successfully!", product: savedProduct });
+        console.log("✅ Product saved!");
+        res.status(201).json({ 
+            success: true,
+            message: "Product Added Successfully!", 
+            product: savedProduct 
+        });
 
     } catch (error) {
-        console.log("🔥 Catch Error:", error.message);
+        console.log("Error:", error.message);
         res.status(500).json({ message: "Server Error: " + error.message });
     }
 };
@@ -110,6 +164,29 @@ export const searchProducts = async (req, res) => {
 };
 
 // 5. Product update karne ke liye
+// export const updateProduct = async (req, res) => {
+//     console.log("--- Updating Product ID:", req.params.id, "---");
+//     try {
+//         let updateData = { ...req.body };
+
+//         if (req.file) {
+//             console.log("🔄 Nayi image detect hui, path update ho raha hai...");
+//             updateData.image = req.file.path;
+//         }
+
+//         const product = await Product.findByIdAndUpdate(
+//             req.params.id, 
+//             updateData, 
+//             { new: true }
+//         );
+
+//         console.log("✅ Product Update Ho Gaya!");
+//         res.status(200).json({ message: "Product Updated!", product });
+//     } catch (error) {
+//         console.log("🔥 Update Error:", error.message);
+//         res.status(500).json({ message: error.message });
+//     }
+// };
 export const updateProduct = async (req, res) => {
     console.log("--- Updating Product ID:", req.params.id, "---");
     try {
@@ -117,7 +194,7 @@ export const updateProduct = async (req, res) => {
 
         if (req.file) {
             console.log("🔄 Nayi image detect hui, path update ho raha hai...");
-            updateData.image = req.file.path;
+            updateData.image = `/uploads/${req.file.filename}`;  // ✅ YEH LINE CHANGE KI
         }
 
         const product = await Product.findByIdAndUpdate(
@@ -133,7 +210,6 @@ export const updateProduct = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 // 6. Product delete karne ke liye
 export const deleteProduct = async (req, res) => {
     console.log("--- Deleting Product ID:", req.params.id, "---");
