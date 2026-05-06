@@ -1,380 +1,33 @@
-// import User from "../models/User.js";
-
-// import bcrypt from "bcryptjs";
-// import jwt from "jsonwebtoken";
-
-// const generateToken = (id) => {
-//     // Ye function user ki ID lega aur use JWT secret ke saath sign karega
-//     return jwt.sign({ id }, process.env.JWT_SECRET, {
-//         expiresIn: "30d", // Token 30 din tak valid rahegi
-//     });
-// };
-
-// // @desc    Get user profile data
-// // @route   GET /api/user/profile
-// export const getUserProfile = async (req, res) => {
-//     try {
-//         // req.user humein protect middleware se mil raha hai
-//         const user = await User.findById(req.user._id).select("-password");
-//         if (user) {
-//             res.json(user);
-//         } else {
-//             res.status(404).json({ message: "User not found" });
-//         }
-//     } catch (error) {
-//         res.status(500).json({ message: "Server Error", error: error.message });
-//     }
-// };
-
-// // @desc    Update profile details
-// // @route   PUT /api/user/profile
-// export const updateUserProfile = async (req, res) => {
-//     try {
-//         const user = await User.findById(req.user._id);
-
-//         if (user) {
-//             user.name = req.body.name || user.name;
-//             user.phone = req.body.phone || user.phone;
-//             user.address = req.body.address || user.address;
-            
-//             // Password change option (Optional)
-//             if (req.body.password) {
-//                 user.password = req.body.password;
-//             }
-
-//             const updatedUser = await user.save();
-//             res.json({
-//                 success: true,
-//                 message: "Profile updated!",
-//                 user: {
-//                     _id: updatedUser._id,
-//                     name: updatedUser.name,
-//                     email: updatedUser.email,
-//                     phone: updatedUser.phone,
-//                     address: updatedUser.address
-//                 }
-//             });
-//         } else {
-//             res.status(404).json({ message: "User not found" });
-//         }
-//     } catch (error) {
-//         res.status(500).json({ message: "Update failed", error: error.message });
-//     }
-// };
-
-
-
-// // 1. Add New Address
-// export const addAddress = async (req, res) => {
-//     try {
-//         const user = await User.findById(req.user.id);
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-
-//         // 1. Naya address push karo
-//         user.addresses.push(req.body);
-
-//         // 2. SAVE karte waqt validation skip karo 
-//         // Isse 'phone required' wali error bypass ho jayegi
-//         await user.save({ validateBeforeSave: false });
-
-//         res.status(201).json(user.addresses);
-//     } catch (err) {
-//         console.error("Error adding address:", err);
-//         res.status(500).json({ message: "Server Error", error: err.message });
-//     }
-// };
-
-// // 2. Edit Address
-// export const updateAddress = async (req, res) => {
-//     try {
-//         const { addressId } = req.params; // URL se ID li
-//         const user = await User.findById(req.user.id);
-
-//         if (!user) return res.status(404).json({ message: "User not found" });
-
-//         // User ke addresses mein se wo wali ID wala address dhoondo
-//         const address = user.addresses.id(addressId);
-
-//         if (!address) {
-//             return res.status(404).json({ message: "Address not found" });
-//         }
-
-//         // Jo data user ne bheja hai sirf wahi update karo
-//         address.street = req.body.street || address.street;
-//         address.city = req.body.city || address.city;
-//         address.state = req.body.state || address.state;
-//         address.zipCode = req.body.zipCode || address.zipCode;
-
-//         // Save with validation off
-//         await user.save({ validateBeforeSave: false });
-
-//         res.json({ 
-//             message: "Address updated successfully", 
-//             addresses: user.addresses 
-//         });
-//     } catch (err) {
-//         console.error("Update Error:", err.message);
-//         res.status(500).json({ message: "Update failed", error: err.message });
-//     }
-// };
-// // 3. Delete Address
-// export const deleteAddress = async (req, res) => {
-//     try {
-//         const { addressId } = req.params; // URL se ID nikali
-        
-//         const user = await User.findById(req.user.id);
-//         if (!user) return res.status(404).json({ message: "User not found" });
-
-//         // Mongoose ka pull method use karke array se delete karo
-//         user.addresses.pull(addressId); 
-
-//         // Save karte waqt validation off rakho (jaise add mein kiya tha)
-//         await user.save({ validateBeforeSave: false });
-
-//         res.json({ 
-//             message: "Address deleted successfully", 
-//             addresses: user.addresses 
-//         });
-//     } catch (err) {
-//         console.error("Delete Error:", err.message);
-//         res.status(500).json({ 
-//             message: "Delete failed", 
-//             error: err.message 
-//         });
-//     }
-// };
-
-// // Pehle se bane functions ke niche ye copy-paste kar do
-// export const getAddresses = async (req, res) => {
-//     try {
-//         // req.user.id humein authMiddleware (protect) se mil rahi hai
-//         const user = await User.findById(req.user.id);
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-
-//         // User ke andar jo addresses array hai wo bhej do
-//         res.status(200).json(user.addresses);
-//     } catch (err) {
-//         console.error("Error fetching addresses:", err);
-//         res.status(500).json({ message: "Server Error", error: err.message });
-//     }
-// };
-
-// // export const registerUser = async (req, res) => {
-// //     const { name, email, password, phone, adminSecret } = req.body;
-
-// //     const userExists = await User.findOne({ email });
-// //     if (userExists) return res.status(400).json({ message: "User already exists" });
-
-// //     // --- YEH WALA PART ADD KARO ---
-// //     const salt = await bcrypt.genSalt(10);
-// //     const hashedPassword = await bcrypt.hash(password, salt);
-// //     // ------------------------------
-
-// //     let role = 'user';
-// //     if (adminSecret === process.env.ADMIN_SECRET_KEY) {
-// //         role = 'admin';
-// //     }
-
-// //     const user = await User.create({
-// //         name,
-// //         email,
-// //         password: hashedPassword, // <--- Ab hashed password jayega
-// //         phone,
-// //         role
-// //     });
-
-// //     if (user) {
-// //         res.status(201).json({
-// //             _id: user._id,
-// //             name: user.name,
-// //             email: user.email,
-// //             role: user.role,
-// //             token: generateToken(user._id)
-// //         });
-// //     }
-// // };
-
-
-// // controllers/userController.js mein ye function add karo
-
-
-
-// // export const loginUser = async (req, res) => {
-// //     const { email, password } = req.body;
-
-// //     try {
-// //         // 1. Check karo email aur password body mein aa rahe hain ya nahi
-// //         if (!email || !password) {
-// //             return res.status(400).json({ message: "Please provide email and password" });
-// //         }
-
-// //         const user = await User.findOne({ email });
-
-// //         // 2. Check karo user database mein mila ya nahi
-// //         if (!user) {
-// //             return res.status(401).json({ message: "Invalid email or password" });
-// //         }
-
-// //         // 3. Bcrypt compare (Safe check)
-// //         const isMatch = await bcrypt.compare(password, user.password);
-
-// //         if (isMatch) {
-// //             res.json({
-// //                 _id: user._id,
-// //                 name: user.name,
-// //                 email: user.email,
-// //                 role: user.role,
-// //                 token: generateToken(user._id)
-// //             });
-// //         } else {
-// //             res.status(401).json({ message: "Invalid email or password" });
-// //         }
-// //     } catch (error) {
-// //         // Yahi error tumhe aa rahi thi "Illegal arguments"
-// //         res.status(500).json({ message: "Server Error", error: error.message });
-// //     }
-// // };
-// export const registerUser = async (req, res) => {
-//     const { name, email, password, phone, adminSecret } = req.body;
-
-//     const userExists = await User.findOne({ email });
-//     if (userExists) return res.status(400).json({ message: "User already exists" });
-
-//     const salt = await bcrypt.genSalt(10);
-//     const hashedPassword = await bcrypt.hash(password, salt);
-
-//     let role = 'user';
-//     if (adminSecret === process.env.ADMIN_SECRET_KEY) {
-//         role = 'admin';
-//     }
-
-//     const user = await User.create({
-//         name,
-//         email,
-//         password: hashedPassword,
-//         phone,
-//         role
-//     });
-
-//     if (user) {
-//         // ✅ FIX: Add isAdmin field
-//         const isAdmin = user.role === 'admin' || user.role === 'super_admin';
-        
-//         res.status(201).json({
-//             _id: user._id,
-//             name: user.name,
-//             email: user.email,
-//             role: user.role,
-//             isAdmin: isAdmin,        // ✅ Added
-//             token: generateToken(user._id)
-//         });
-//     }
-// };
-
-// export const loginUser = async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//         if (!email || !password) {
-//             return res.status(400).json({ message: "Please provide email and password" });
-//         }
-
-//         const user = await User.findOne({ email });
-
-//         if (!user) {
-//             return res.status(401).json({ message: "Invalid email or password" });
-//         }
-
-//         const isMatch = await bcrypt.compare(password, user.password);
-
-//         if (isMatch) {
-//             // ✅ FIX: Add isAdmin for frontend compatibility
-//             const isAdmin = user.role === 'admin' || user.role === 'super_admin';
-            
-//             res.json({
-//                 _id: user._id,
-//                 name: user.name,
-//                 email: user.email,
-//                 role: user.role,
-//                 isAdmin: isAdmin,        // ✅ Add this line
-//                 token: generateToken(user._id)
-//             });
-//         } else {
-//             res.status(401).json({ message: "Invalid email or password" });
-//         }
-//     } catch (error) {
-//         res.status(500).json({ message: "Server Error", error: error.message });
-//     }
-// };
-
-// // ✅ CORRECT - No 'next' parameter
-// // ✅ Make sure NO 'next' parameter here
-// export const toggleWishlist = async (req, res) => {
-//     try {
-        
-        
-//         const user = await User.findById(req.user._id);
-//         const { productId } = req.body;
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User nahi mila" });
-//         }
-
-//         if (!productId) {
-//             return res.status(400).json({ message: "Product ID is required" });
-//         }
-
-//         if (user.wishlist.includes(productId)) {
-//             user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
-//             await user.save();
-//             return res.status(200).json({ 
-//                 success: true, 
-//                 message: "Removed from Wishlist ❤️",
-//                 wishlist: user.wishlist 
-//             });
-//         } else {
-//             user.wishlist.push(productId);
-//             await user.save();
-//             return res.status(200).json({ 
-//                 success: true, 
-//                 message: "Added to Wishlist 😍",
-//                 wishlist: user.wishlist 
-//             });
-//         }
-//     } catch (error) {
-//         console.error("❌ Wishlist Error:", error);
-//         return res.status(500).json({ 
-//             success: false, 
-//             message: error.message 
-//         });
-//     }
-// };
-
-// export const getWishlist = async (req, res) => {
-//     try {
-//         const user = await User.findById(req.user._id).populate('wishlist', 'name price image');
-//         res.json({ success: true, wishlist: user.wishlist });
-//     } catch (error) {
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// };
-// // ISI TARAH REGISTER BHI ADD KAR DENA AGAR MISSING HAI
-
-
+// backend/controllers/userController.js
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: "30d",
+// =======================
+//   TOKEN GENERATION
+// =======================
+
+// ✅ Access Token (Short lived - 1 hour)
+const generateAccessToken = (id) => {
+    return jwt.sign({ id, type: 'access' }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
     });
 };
+
+// ✅ Refresh Token (Long lived - 7 days)
+const generateRefreshToken = (id) => {
+    return jwt.sign({ id, type: 'refresh', tokenId: crypto.randomBytes(16).toString('hex') }, 
+        process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET, {
+        expiresIn: "7d",
+    });
+};
+
+// ✅ Store refresh tokens (for invalidation on logout)
+const refreshTokens = new Set();
+
+// ✅ Track failed login attempts
+const loginAttempts = new Map();
 
 // =======================
 //   AUTH ROUTES
@@ -383,11 +36,25 @@ const generateToken = (id) => {
 export const registerUser = async (req, res) => {
     const { name, email, password, phone, adminSecret } = req.body;
 
+    // ✅ Input validation
+    if (!name || name.length < 2) {
+        return res.status(400).json({ message: "Name must be at least 2 characters" });
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        return res.status(400).json({ message: "Please provide a valid email" });
+    }
+    
+    if (!password || password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
     try {
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({ email: email.toLowerCase() });
         if (userExists) return res.status(400).json({ message: "User already exists" });
 
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         let role = 'user';
@@ -396,64 +63,169 @@ export const registerUser = async (req, res) => {
         }
 
         const user = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: email.toLowerCase().trim(),
             password: hashedPassword,
             phone,
-            role
+            role,
+            createdAt: new Date(),
+            isActive: true
         });
 
         if (user) {
+            const accessToken = generateAccessToken(user._id);
+            const refreshToken = generateRefreshToken(user._id);
+            refreshTokens.add(refreshToken);
+            
             const isAdmin = user.role === 'admin' || user.role === 'super_admin';
             
             res.status(201).json({
+                success: true,
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
                 isAdmin: isAdmin,
-                token: generateToken(user._id)
+                accessToken: accessToken,
+                refreshToken: refreshToken
             });
         }
     } catch (error) {
+        console.error("Register error:", error);
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
 
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
+    const ip = req.ip || req.connection.remoteAddress;
+
+    // ✅ Check brute force attempts
+    const attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: Date.now() };
+    
+    if (Date.now() - attempts.lastAttempt > 15 * 60 * 1000) {
+        attempts.count = 0;
+    }
+    
+    if (attempts.count >= 5) {
+        return res.status(429).json({ 
+            success: false, 
+            message: 'Too many login attempts. Please try again after 15 minutes.' 
+        });
+    }
 
     try {
         if (!email || !password) {
             return res.status(400).json({ message: "Please provide email and password" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
+            attempts.count++;
+            attempts.lastAttempt = Date.now();
+            loginAttempts.set(ip, attempts);
             return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        if (user.isLocked && user.lockUntil > Date.now()) {
+            return res.status(423).json({ 
+                success: false, 
+                message: `Account locked. Try again after ${new Date(user.lockUntil).toLocaleTimeString()}` 
+            });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (isMatch) {
+            loginAttempts.delete(ip);
+            user.lastLogin = new Date();
+            user.failedLoginAttempts = 0;
+            await user.save();
+            
+            const accessToken = generateAccessToken(user._id);
+            const refreshToken = generateRefreshToken(user._id);
+            refreshTokens.add(refreshToken);
+            
             const isAdmin = user.role === 'admin' || user.role === 'super_admin';
             
             res.json({
+                success: true,
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
                 role: user.role,
                 isAdmin: isAdmin,
-                token: generateToken(user._id)
+                accessToken: accessToken,
+                refreshToken: refreshToken
             });
         } else {
+            attempts.count++;
+            attempts.lastAttempt = Date.now();
+            loginAttempts.set(ip, attempts);
+            
+            if (attempts.count >= 10) {
+                await User.updateOne(
+                    { email: user.email },
+                    { isLocked: true, lockUntil: Date.now() + 30 * 60 * 1000, failedLoginAttempts: attempts.count }
+                );
+                return res.status(423).json({ 
+                    success: false, 
+                    message: 'Account locked due to too many failed attempts. Try after 30 minutes.' 
+                });
+            }
+            
+            user.failedLoginAttempts = attempts.count;
+            await user.save();
             res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
+        console.error("Login error:", error);
         res.status(500).json({ message: "Server Error", error: error.message });
     }
+};
+
+export const refreshAccessToken = async (req, res) => {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+        return res.status(401).json({ success: false, message: 'Refresh token required' });
+    }
+    
+    if (!refreshTokens.has(refreshToken)) {
+        return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+    }
+    
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET);
+        
+        if (decoded.type !== 'refresh') {
+            return res.status(401).json({ success: false, message: 'Invalid token type' });
+        }
+        
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'User not found' });
+        }
+        
+        const newAccessToken = generateAccessToken(user._id);
+        const newRefreshToken = generateRefreshToken(user._id);
+        
+        refreshTokens.delete(refreshToken);
+        refreshTokens.add(newRefreshToken);
+        
+        res.json({ success: true, accessToken: newAccessToken, refreshToken: newRefreshToken });
+    } catch (error) {
+        refreshTokens.delete(refreshToken);
+        res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+    }
+};
+
+export const logoutUser = async (req, res) => {
+    const refreshToken = req.body.refreshToken;
+    if (refreshToken) refreshTokens.delete(refreshToken);
+    res.json({ success: true, message: 'Logged out successfully' });
 };
 
 // =======================
@@ -476,16 +248,18 @@ export const getUserProfile = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-
         if (user) {
             user.name = req.body.name || user.name;
             user.phone = req.body.phone || user.phone;
             
             if (req.body.password) {
-                const salt = await bcrypt.genSalt(10);
+                if (req.body.password.length < 6) {
+                    return res.status(400).json({ message: "Password must be at least 6 characters" });
+                }
+                const salt = await bcrypt.genSalt(12);
                 user.password = await bcrypt.hash(req.body.password, salt);
+                user.passwordChangedAt = new Date();
             }
-
             const updatedUser = await user.save();
             res.json({
                 success: true,
@@ -513,12 +287,9 @@ export const updateUserProfile = async (req, res) => {
 export const getAddresses = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        if (!user) return res.status(404).json({ message: "User not found" });
         res.status(200).json(user.addresses);
     } catch (err) {
-        console.error("Error fetching addresses:", err);
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
@@ -526,16 +297,19 @@ export const getAddresses = async (req, res) => {
 export const addAddress = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        const { street, city, state, zipCode } = req.body;
+        if (!street || !city || !state || !zipCode) {
+            return res.status(400).json({ message: "All address fields are required" });
         }
-
+        const zipRegex = /^[0-9]{6}$/;
+        if (!zipRegex.test(zipCode)) {
+            return res.status(400).json({ message: "Zip code must be 6 digits" });
+        }
         user.addresses.push(req.body);
         await user.save({ validateBeforeSave: false });
-
         res.status(201).json(user.addresses);
     } catch (err) {
-        console.error("Error adding address:", err);
         res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
@@ -544,28 +318,16 @@ export const updateAddress = async (req, res) => {
     try {
         const { addressId } = req.params;
         const user = await User.findById(req.user.id);
-
         if (!user) return res.status(404).json({ message: "User not found" });
-
         const address = user.addresses.id(addressId);
-
-        if (!address) {
-            return res.status(404).json({ message: "Address not found" });
-        }
-
+        if (!address) return res.status(404).json({ message: "Address not found" });
         address.street = req.body.street || address.street;
         address.city = req.body.city || address.city;
         address.state = req.body.state || address.state;
         address.zipCode = req.body.zipCode || address.zipCode;
-
         await user.save({ validateBeforeSave: false });
-
-        res.json({ 
-            message: "Address updated successfully", 
-            addresses: user.addresses 
-        });
+        res.json({ message: "Address updated successfully", addresses: user.addresses });
     } catch (err) {
-        console.error("Update Error:", err.message);
         res.status(500).json({ message: "Update failed", error: err.message });
     }
 };
@@ -575,17 +337,113 @@ export const deleteAddress = async (req, res) => {
         const { addressId } = req.params;
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
-
         user.addresses.pull(addressId);
         await user.save({ validateBeforeSave: false });
-
-        res.json({ 
-            message: "Address deleted successfully", 
-            addresses: user.addresses 
-        });
+        res.json({ message: "Address deleted successfully", addresses: user.addresses });
     } catch (err) {
-        console.error("Delete Error:", err.message);
         res.status(500).json({ message: "Delete failed", error: err.message });
+    }
+};
+
+// =======================
+//   CART ROUTES
+// =======================
+
+export const addToCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const { productId, quantity = 1 } = req.body;
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        const existingItem = user.cart.find(item => item.productId.toString() === productId);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            user.cart.push({ productId, quantity });
+        }
+        await user.save();
+        const updatedUser = await User.findById(req.user._id).populate('cart.productId', 'name price image');
+        let totalAmount = 0;
+        const cartItems = updatedUser.cart.map(item => {
+            totalAmount += item.productId.price * item.quantity;
+            return {
+                productId: item.productId._id,
+                name: item.productId.name,
+                price: item.productId.price,
+                image: item.productId.image,
+                quantity: item.quantity,
+                itemTotal: item.productId.price * item.quantity
+            };
+        });
+        res.json({ success: true, message: "Added to cart", cart: { items: cartItems, totalItems: cartItems.length, totalAmount: totalAmount } });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const removeFromCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const { productId } = req.params;
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        user.cart = user.cart.filter(item => item.productId.toString() !== productId);
+        await user.save();
+        res.json({ success: true, message: "Removed from cart", cart: user.cart });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const updateCartQuantity = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const { productId, quantity } = req.body;
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        const cartItem = user.cart.find(item => item.productId.toString() === productId);
+        if (cartItem) {
+            cartItem.quantity = quantity;
+            await user.save();
+            res.json({ success: true, message: "Cart updated", cart: user.cart });
+        } else {
+            res.status(404).json({ success: false, message: "Product not in cart" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const clearCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        user.cart = [];
+        await user.save();
+        res.json({ success: true, message: "Cart cleared successfully", cart: { items: [], totalItems: 0, totalAmount: 0 } });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const getCartWithDetails = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('cart.productId', 'name price image stock');
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        let totalAmount = 0;
+        const cartItems = user.cart.filter(item => item.productId).map(item => {
+            const itemTotal = item.productId.price * item.quantity;
+            totalAmount += itemTotal;
+            return {
+                productId: item.productId._id,
+                name: item.productId.name,
+                price: item.productId.price,
+                image: item.productId.image,
+                quantity: item.quantity,
+                stock: item.productId.stock,
+                itemTotal: itemTotal
+            };
+        });
+        res.json({ success: true, cart: { items: cartItems, totalItems: cartItems.length, totalAmount: totalAmount } });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -597,38 +455,19 @@ export const toggleWishlist = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const { productId } = req.body;
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        if (!productId) {
-            return res.status(400).json({ message: "Product ID is required" });
-        }
-
+        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!productId) return res.status(400).json({ message: "Product ID is required" });
         if (user.wishlist.includes(productId)) {
             user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
             await user.save();
-            return res.status(200).json({ 
-                success: true, 
-                message: "Removed from Wishlist",
-                wishlist: user.wishlist 
-            });
+            return res.status(200).json({ success: true, message: "Removed from Wishlist", wishlist: user.wishlist });
         } else {
             user.wishlist.push(productId);
             await user.save();
-            return res.status(200).json({ 
-                success: true, 
-                message: "Added to Wishlist",
-                wishlist: user.wishlist 
-            });
+            return res.status(200).json({ success: true, message: "Added to Wishlist", wishlist: user.wishlist });
         }
     } catch (error) {
-        console.error("Wishlist Error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: error.message 
-        });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -641,11 +480,43 @@ export const getWishlist = async (req, res) => {
     }
 };
 
+export const getWishlistWithDetails = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('wishlist', 'name price image stock');
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        res.json({ success: true, wishlist: user.wishlist, totalItems: user.wishlist.length });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const moveWishlistToCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const { productId, quantity = 1 } = req.body;
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        if (!user.wishlist.includes(productId)) {
+            return res.status(400).json({ success: false, message: "Product not in wishlist" });
+        }
+        user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
+        const cartItemIndex = user.cart.findIndex(item => item.productId.toString() === productId);
+        if (cartItemIndex > -1) {
+            user.cart[cartItemIndex].quantity += quantity;
+        } else {
+            user.cart.push({ productId, quantity });
+        }
+        await user.save();
+        const updatedUser = await User.findById(user._id).populate('wishlist', 'name price image');
+        res.json({ success: true, message: "Item moved from wishlist to cart", wishlist: updatedUser.wishlist, wishlistCount: updatedUser.wishlist.length });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // =======================
 //   ADMIN ROUTES (RBAC)
 // =======================
 
-// ✅ Get all users (Admin+)
 export const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({}).select("-password");
@@ -655,56 +526,31 @@ export const getAllUsers = async (req, res) => {
     }
 };
 
-// ✅ Update user role (Only Super Admin)
 export const updateUserRole = async (req, res) => {
     try {
         const { id } = req.params;
         const { role } = req.body;
-        
         const validRoles = ['user', 'admin', 'super_admin'];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({ message: 'Invalid role' });
-        }
-        
-        // Check if user exists
+        if (!validRoles.includes(role)) return res.status(400).json({ message: 'Invalid role' });
         const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        // Cannot change super_admin if requester is not super_admin
+        if (!user) return res.status(404).json({ message: 'User not found' });
         if (user.role === 'super_admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: 'Cannot modify Super Admin user' });
         }
-        
         user.role = role;
         await user.save();
-        
-        res.json({ 
-            success: true,
-            message: 'User role updated successfully', 
-            user: { id: user._id, name: user.name, email: user.email, role: user.role }
-        });
+        res.json({ success: true, message: 'User role updated successfully', user: { id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// ✅ Delete user (Only Super Admin)
 export const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        
         const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        
-        // Cannot delete super_admin
-        if (user.role === 'super_admin') {
-            return res.status(403).json({ message: 'Cannot delete Super Admin user' });
-        }
-        
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (user.role === 'super_admin') return res.status(403).json({ message: 'Cannot delete Super Admin user' });
         await user.deleteOne();
         res.json({ success: true, message: 'User deleted successfully' });
     } catch (error) {
