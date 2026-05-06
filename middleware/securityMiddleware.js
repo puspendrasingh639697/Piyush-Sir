@@ -1,8 +1,7 @@
 // backend/middleware/securityMiddleware.js
 import helmet from 'helmet';
-// ❌ Comment out mongoSanitize - compatibility issue on Render
-// import mongoSanitize from 'express-mongo-sanitize';
-import xss from 'xss-clean';
+// ❌ Comment out xss-clean - compatibility issue on Render
+// import xss from 'xss-clean';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 
@@ -30,13 +29,12 @@ export const securityHeaders = helmet({
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 });
 
-// ✅ 2. NoSQL Injection Protection - Custom Implementation (Fixed)
+// ✅ 2. NoSQL Injection Protection - Custom Implementation
 export const noSqlSanitize = (req, res, next) => {
     // Sanitize query parameters
     if (req.query) {
         Object.keys(req.query).forEach(key => {
             if (typeof req.query[key] === 'string') {
-                // Remove MongoDB operators ($, ., etc.)
                 req.query[key] = req.query[key]
                     .replace(/[$]/g, '')
                     .replace(/[.]/g, '')
@@ -51,7 +49,6 @@ export const noSqlSanitize = (req, res, next) => {
             if (!obj) return obj;
             for (let key in obj) {
                 if (typeof obj[key] === 'string') {
-                    // Remove MongoDB operators
                     obj[key] = obj[key]
                         .replace(/[$]/g, '')
                         .replace(/[.]/g, '')
@@ -67,16 +64,50 @@ export const noSqlSanitize = (req, res, next) => {
     next();
 };
 
-// ✅ 3. XSS Protection
-export const xssProtection = xss();
+// ✅ 3. XSS Protection - Custom Implementation (instead of xss-clean)
+export const xssProtection = (req, res, next) => {
+    // Sanitize query parameters
+    if (req.query) {
+        Object.keys(req.query).forEach(key => {
+            if (typeof req.query[key] === 'string') {
+                req.query[key] = req.query[key]
+                    .replace(/<[^>]*>/g, '')
+                    .replace(/javascript:/gi, '')
+                    .replace(/on\w+=/gi, '')
+                    .replace(/[<>'"]/g, '');
+            }
+        });
+    }
+    
+    // Sanitize body
+    if (req.body) {
+        const sanitizeXSS = (obj) => {
+            if (!obj) return obj;
+            for (let key in obj) {
+                if (typeof obj[key] === 'string') {
+                    obj[key] = obj[key]
+                        .replace(/<[^>]*>/g, '')
+                        .replace(/javascript:/gi, '')
+                        .replace(/on\w+=/gi, '')
+                        .replace(/[<>'"]/g, '');
+                } else if (typeof obj[key] === 'object') {
+                    sanitizeXSS(obj[key]);
+                }
+            }
+        };
+        sanitizeXSS(req.body);
+    }
+    
+    next();
+};
 
 // ✅ 4. Parameter Pollution Prevention
 export const preventParameterPollution = hpp();
 
 // ✅ 5. Global Rate Limiting
 export const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per 15 minutes
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: {
         success: false,
         message: 'Too many requests from this IP. Please try again after 15 minutes.'
@@ -89,7 +120,7 @@ export const globalLimiter = rateLimit({
 // ✅ 6. Strict rate limit for auth routes
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5, // Only 5 attempts per 15 minutes
+    max: 5,
     skipSuccessfulRequests: true,
     message: {
         success: false,
@@ -101,8 +132,8 @@ export const authLimiter = rateLimit({
 
 // ✅ 7. Strict rate limit for admin routes
 export const adminLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 500, // 500 requests per hour for admin
+    windowMs: 60 * 60 * 1000,
+    max: 500,
     message: {
         success: false,
         message: 'Too many admin requests. Please slow down.'
@@ -113,8 +144,8 @@ export const adminLimiter = rateLimit({
 
 // ✅ 8. API rate limit for products
 export const apiLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30, // 30 requests per minute
+    windowMs: 60 * 1000,
+    max: 30,
     message: {
         success: false,
         message: 'Too many requests. Please wait a moment.'
@@ -124,7 +155,7 @@ export const apiLimiter = rateLimit({
 // ✅ 9. Request Size Limiter
 export const requestSizeLimiter = (req, res, next) => {
     const contentLength = parseInt(req.headers['content-length']) || 0;
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     
     if (contentLength > maxSize) {
         return res.status(413).json({
@@ -193,7 +224,6 @@ export const preventSqlInjection = (req, res, next) => {
         return false;
     };
     
-    // Check query params
     for (const key in req.query) {
         if (checkValue(req.query[key])) {
             return res.status(400).json({
@@ -203,7 +233,6 @@ export const preventSqlInjection = (req, res, next) => {
         }
     }
     
-    // Check body
     for (const key in req.body) {
         if (checkValue(req.body[key])) {
             return res.status(400).json({
