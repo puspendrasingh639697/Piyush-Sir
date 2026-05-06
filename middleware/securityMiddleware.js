@@ -1,6 +1,7 @@
 // backend/middleware/securityMiddleware.js
 import helmet from 'helmet';
-import mongoSanitize from 'express-mongo-sanitize';
+// ❌ Comment out mongoSanitize - compatibility issue on Render
+// import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
@@ -29,13 +30,42 @@ export const securityHeaders = helmet({
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 });
 
-// ✅ 2. NoSQL Injection Protection
-export const noSqlSanitize = mongoSanitize({
-    replaceWith: '_',
-    onSanitize: ({ req, key }) => {
-        console.warn(`⚠️ NoSQL injection attempt detected on field: ${key}`);
+// ✅ 2. NoSQL Injection Protection - Custom Implementation (Fixed)
+export const noSqlSanitize = (req, res, next) => {
+    // Sanitize query parameters
+    if (req.query) {
+        Object.keys(req.query).forEach(key => {
+            if (typeof req.query[key] === 'string') {
+                // Remove MongoDB operators ($, ., etc.)
+                req.query[key] = req.query[key]
+                    .replace(/[$]/g, '')
+                    .replace(/[.]/g, '')
+                    .replace(/[{}=]/g, '');
+            }
+        });
     }
-});
+    
+    // Sanitize body
+    if (req.body) {
+        const sanitizeObj = (obj) => {
+            if (!obj) return obj;
+            for (let key in obj) {
+                if (typeof obj[key] === 'string') {
+                    // Remove MongoDB operators
+                    obj[key] = obj[key]
+                        .replace(/[$]/g, '')
+                        .replace(/[.]/g, '')
+                        .replace(/[{}=]/g, '');
+                } else if (typeof obj[key] === 'object') {
+                    sanitizeObj(obj[key]);
+                }
+            }
+        };
+        sanitizeObj(req.body);
+    }
+    
+    next();
+};
 
 // ✅ 3. XSS Protection
 export const xssProtection = xss();
