@@ -1,29 +1,18 @@
-// backend/scripts/createSuperAdmin.js
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import User from '../models/User.js';
 
-// Load environment variables
 dotenv.config();
 
 const createSuperAdmin = async () => {
     try {
-        // Connect to MongoDB
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Database connected');
         
-        // Check if super admin already exists
-        const existingAdmin = await User.findOne({ role: 'super_admin' });
+        // Delete existing if any (to avoid duplicate)
+        await User.deleteOne({ email: 'superadmin@example.com' });
         
-        if (existingAdmin) {
-            console.log('⚠️ Super Admin already exists!');
-            console.log(`📧 Email: ${existingAdmin.email}`);
-            console.log(`👑 Role: ${existingAdmin.role}`);
-            process.exit(0);
-        }
-        
-        // Create super admin
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash('SuperAdmin@123', salt);
         
@@ -43,11 +32,10 @@ const createSuperAdmin = async () => {
         console.log('🔑 Password: SuperAdmin@123');
         console.log('👑 Role: super_admin');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🎉 You can now login to admin panel!');
         
         process.exit(0);
     } catch (error) {
-        console.error('❌ Error creating super admin:', error);
+        console.error('❌ Error:', error);
         process.exit(1);
     }
 };
