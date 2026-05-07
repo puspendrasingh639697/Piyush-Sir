@@ -32,52 +32,26 @@ const loginAttempts = new Map();
 // =======================
 //   AUTH ROUTES
 // =======================
-
 export const registerUser = async (req, res) => {
-    const { name, email, password, phone, adminSecret } = req.body;
-
-    // ✅ Input validation
-    if (!name || name.length < 2) {
-        return res.status(400).json({ message: "Name must be at least 2 characters" });
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-        return res.status(400).json({ message: "Please provide a valid email" });
-    }
-    
-    if (!password || password.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
-    }
+    const { name, email, password, phone } = req.body;
 
     try {
         const userExists = await User.findOne({ email: email.toLowerCase() });
-        if (userExists) return res.status(400).json({ message: "User already exists" });
-
-        const salt = await bcrypt.genSalt(12);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        let role = 'user';
-        if (adminSecret === process.env.ADMIN_SECRET_KEY) {
-            role = 'admin';
+        if (userExists) {
+            return res.status(400).json({ message: "User already exists" });
         }
 
         const user = await User.create({
             name: name.trim(),
             email: email.toLowerCase().trim(),
-            password: hashedPassword,
-            phone,
-            role,
-            createdAt: new Date(),
-            isActive: true
+            password: password,
+            phone: phone || null  // ✅ Phone optional
         });
 
         if (user) {
-            const accessToken = generateAccessToken(user._id);
-            const refreshToken = generateRefreshToken(user._id);
-            refreshTokens.add(refreshToken);
-            
-            const isAdmin = user.role === 'admin' || user.role === 'super_admin';
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+                expiresIn: "30d",
+            });
             
             res.status(201).json({
                 success: true,
@@ -85,17 +59,14 @@ export const registerUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                isAdmin: isAdmin,
-                accessToken: accessToken,
-                refreshToken: refreshToken
+                token: token
             });
         }
     } catch (error) {
         console.error("Register error:", error);
-        res.status(500).json({ message: "Server Error", error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
-
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
     const ip = req.ip || req.connection.remoteAddress;
