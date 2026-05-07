@@ -138,11 +138,15 @@ router.delete("/cart/remove/:productId", protect, removeFromCart);
 router.delete("/cart/clear", protect, clearCart);
 
 // =======================
-//   ✅ WISHLIST ROUTES - ADD THESE
+//   ✅ WISHLIST ROUTES - YAHAN ADD KARO
 // =======================
 router.get("/wishlist", protect, getWishlist);
 router.post("/wishlist/toggle", protect, toggleWishlist);
 router.post("/wishlist/move-to-cart", protect, moveWishlistToCart);
+
+console.log("✅ Wishlist routes registered:");
+console.log("   GET /wishlist");
+console.log("   POST /wishlist/toggle");
 
 // =======================
 //   ADMIN ROUTES
