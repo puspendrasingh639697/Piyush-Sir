@@ -53,13 +53,13 @@ app.use(securityHeaders);
 // 2. CORS setup with strict options
 app.use(cors({
     origin: function(origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:5174',
-            'https://piyush-products.vercel.app',    // ✅ NEW
-            'https://yourdomain.com',
-            'https://admin.yourdomain.com'
-        ];
+       const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://piyush-products.vercel.app',    // ← ये लाइन
+    'https://yourdomain.com',
+    'https://admin.yourdomain.com'
+];
         
         if (!origin) return callback(null, true);
         
